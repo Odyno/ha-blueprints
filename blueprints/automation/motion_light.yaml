@@ -1,0 +1,80 @@
+blueprint:
+  name: Motion-Activated Light
+  description: >
+    Automatically turn on a light when motion is detected.
+    The light will turn off after the specified timeout period if no motion is detected.
+    Perfect for bathrooms, corridors, and other motion-sensitive areas.
+  domain: automation
+  author: Alessandro Staniscia
+  
+  # Minimum Home Assistant version required
+  homeassistant:
+    min_version: 2023.6.0
+  
+  # Blueprint version tracking (semantic versioning)
+  metadata:
+    version: "1.0.0"
+    source_url: "https://github.com/Odyno/ha-blueprints/blob/main/blueprints/automation/motion_light.yaml"
+
+  # User-configurable parameters
+  input:
+    motion_sensor:
+      name: Motion Sensor
+      description: The binary sensor that detects motion
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: motion
+    
+    light_target:
+      name: Light
+      description: The light(s) to control when motion is detected
+      selector:
+        target:
+          entity:
+            domain: light
+    
+    timeout_minutes:
+      name: Turn-off Timeout (minutes)
+      description: How many minutes to keep the light on after last motion detected
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: minutes
+      default: 5
+    
+    brightness_percent:
+      name: Brightness
+      description: Brightness level when light turns on (0-100)
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+      default: 80
+
+# Automation trigger and actions
+trigger:
+  platform: state
+  entity_id: !input motion_sensor
+  to: "on"
+
+action:
+  # Turn on light with specified brightness
+  - service: light.turn_on
+    target: !input light_target
+    data:
+      brightness_pct: !input brightness_percent
+  
+  # Wait for motion to stop + timeout period
+  - wait_for_trigger:
+      platform: state
+      entity_id: !input motion_sensor
+      to: "off"
+      for:
+        minutes: !input timeout_minutes
+  
+  # Turn off light
+  - service: light.turn_off
+    target: !input light_target
