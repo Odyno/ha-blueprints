@@ -8,7 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Placeholder for upcoming features
+- **Location Watchdog - GPS fermo** (v1.0.0)
+  - Stale GPS detection with configurable movement threshold
+  - Snapshot storage via input_text helper
+  - Single-notification-per-event logic via input_boolean helper
+  - Optional fallback action with `device_tracker.see`
+
+- **Smart Light - Sun & Motion** (v1.1.0)
+  - Adaptive brightness based on sun elevation
+  - Motion boost logic with configurable duration
+  - Manual override with boolean-driven reactivation
+  - Supports multiple lights and motion sensors
+
+### Changed
+- Updated repository documentation to include both new automation blueprints:
+  - README blueprint list and import badges
+  - Italian README blueprint catalog
+  - Setup guide import URLs, requirements, and examples
+  - Documentation index blueprint overview and file tree
 
 ---
 
@@ -103,8 +120,8 @@ When updating blueprints:
 ## Support
 
 For issues or feature requests, please:
-- Open [GitHub Issues](https://github.com/yourname/ha-blueprints/issues)
-- Join [GitHub Discussions](https://github.com/yourname/ha-blueprints/discussions)
+- Open [GitHub Issues](https://github.com/Odyno/ha-blueprints/issues)
+- Join [GitHub Discussions](https://github.com/Odyno/ha-blueprints/discussions)
 - Visit [Community Forum](https://community.home-assistant.io/c/blueprints-exchange/53)
 
 ---

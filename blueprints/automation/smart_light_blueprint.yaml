@@ -1,0 +1,261 @@
+blueprint:
+  name: Smart Light - Sun & Motion
+  description: >
+    **v1.1.0**
+
+    Automatic light control based on sun elevation and motion sensors.
+    - Gradual brightness transition at sunset (0° → -6°)
+    - 100% boost when any motion sensor is triggered
+    - Manual override disables the automation
+    - Automatic reactivation at 5:00 or manually via input_boolean
+    - Supports multiple lights and motion sensors
+  domain: automation
+  author: "Alessandro Staniscia ( Odyno )"
+  source_url: "https://github.com/Odyno/ha-blueprints/blob/main/blueprints/automation/smart_light_blueprint.yaml"
+  homeassistant:
+    min_version: "2024.6.0"
+
+  input:
+    # === ENTITIES ===
+    light_entities:
+      name: Lights
+      description: The lights to control (you can select more than one)
+      selector:
+        entity:
+          domain: light
+          multiple: true
+      default:
+        - light.lampadina_smart_studio
+
+    motion_entities:
+      name: Motion sensors (PIR)
+      description: The motion sensors that trigger the brightness boost (you can select more than one)
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: motion
+          multiple: true
+      default:
+        - binary_sensor.motion_pir_studio
+
+    boolean_entity:
+      name: Input Boolean (enable)
+      description: Input boolean to enable/disable the automation
+      selector:
+        entity:
+          domain: input_boolean
+      default: input_boolean.smart_light_lampada_studio
+
+    # === BRIGHTNESS ===
+    brightness_normal:
+      name: Normal brightness
+      description: Base brightness when the sun is below the threshold (0-255)
+      selector:
+        number:
+          min: 1
+          max: 255
+          step: 1
+          mode: slider
+      default: 178
+
+    brightness_motion:
+      name: Motion brightness
+      description: Brightness when motion is detected (0-255)
+      selector:
+        number:
+          min: 1
+          max: 255
+          step: 1
+          mode: slider
+      default: 255
+
+    # === COLOR TEMPERATURE ===
+    color_temp:
+      name: Color temperature
+      description: Color temperature in Kelvin
+      selector:
+        color_temp:
+          unit: kelvin
+          min: 2000
+          max: 6500
+      default: 3000
+
+    # === TIMING ===
+    motion_duration:
+      name: Motion boost duration
+      description: Minutes of brightness boost after motion
+      selector:
+        number:
+          min: 1
+          max: 120
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+      default: 30
+
+    # === SUN THRESHOLDS ===
+    sun_threshold_high:
+      name: Sun high threshold
+      description: Sun elevation above which the light is off (degrees)
+      selector:
+        number:
+          min: -18
+          max: 10
+          step: 1
+          unit_of_measurement: "°"
+          mode: slider
+      default: 0
+
+    sun_threshold_low:
+      name: Sun low threshold
+      description: Sun elevation below which the light is at 100% of normal brightness (degrees)
+      selector:
+        number:
+          min: -18
+          max: 0
+          step: 1
+          unit_of_measurement: "°"
+          mode: slider
+      default: -6
+
+    # === TIMES ===
+    time_lights_off:
+      name: Lights off time
+      description: Time when the light turns off automatically
+      selector:
+        time: {}
+      default: "00:00:00"
+
+    time_morning_reset:
+      name: Morning reactivation time
+      description: Time when the automation is reactivated automatically
+      selector:
+        time: {}
+      default: "05:00:00"
+
+triggers:
+  - entity_id: sun.sun
+    id: sun_change
+    trigger: state
+  - entity_id: !input motion_entities
+    to: "on"
+    id: motion_detected
+    trigger: state
+  - entity_id: !input motion_entities
+    to: "off"
+    for:
+      minutes: !input motion_duration
+    id: motion_stopped
+    trigger: state
+  - at: !input time_lights_off
+    id: auto_lights_off
+    trigger: time
+  - at: !input time_morning_reset
+    id: morning_reset
+    trigger: time
+  - entity_id: !input light_entities
+    id: light_change_state
+    trigger: state
+  - entity_id: !input boolean_entity
+    to: "on"
+    id: enable_automation
+    trigger: state
+
+conditions: []
+
+actions:
+  - variables:
+      # Input references
+      light_entities: !input light_entities
+      motion_entities: !input motion_entities
+      boolean_var: !input boolean_entity
+      brightness_normal: !input brightness_normal
+      brightness_motion: !input brightness_motion
+      color_temp: !input color_temp
+      motion_duration: !input motion_duration
+      sun_threshold_high: !input sun_threshold_high
+      sun_threshold_low: !input sun_threshold_low
+      # Calcoli
+      elevation: "{{ state_attr('sun.sun', 'elevation') | float(0) }}"
+      is_day: "{{ elevation > sun_threshold_high }}"
+      is_night: "{{ elevation <= sun_threshold_high }}"
+      # Movimento attivo: basato sul trigger per affidabilità
+      is_motion_active: >-
+        {% if trigger.id == 'motion_stopped' %}false{% elif trigger.id == 'motion_detected' %}true{% else %}{% set ns = namespace(active=false) %}{% for sensor in motion_entities %}{% if states(sensor) == 'on' %}{% set ns.active = true %}{% elif states(sensor) == 'off' and (as_timestamp(now()) - as_timestamp(states[sensor].last_changed)) < (motion_duration * 60) %}{% set ns.active = true %}{% endif %}{% endfor %}{{ ns.active }}{% endif %}
+      brightness_sun: >-
+        {% if elevation >= sun_threshold_high %}0{% elif elevation <= sun_threshold_low %}{{ brightness_normal }}{% else %}{{ ((sun_threshold_high - elevation) / (sun_threshold_high - sun_threshold_low) * brightness_normal) | int }}{% endif %}
+      target_brightness: >-
+        {% if trigger.id == 'auto_lights_off' %}0{% elif is_day | bool %}0{% elif (is_motion_active | string | trim | lower) == 'true' and is_night | bool %}{{ brightness_motion }}{% else %}{{ brightness_sun }}{% endif %}
+      should_turn_off: "{{ (target_brightness | int) == 0 }}"
+      is_override: >-
+        {{ trigger.id == 'light_change_state'
+           and trigger.to_state is not none
+           and trigger.from_state is not none
+           and (trigger.to_state.state != trigger.from_state.state
+                or trigger.to_state.attributes.get('brightness') != trigger.from_state.attributes.get('brightness')
+                or trigger.to_state.attributes.get('color_temp') != trigger.from_state.attributes.get('color_temp'))
+           and not trigger.to_state.context.parent_id }}
+
+  # === GESTIONE OVERRIDE E RIATTIVAZIONE ===
+  - choose:
+      - alias: Override - Disattiva Automazione
+        conditions:
+          - condition: template
+            value_template: "{{ is_override }}"
+          - condition: template
+            value_template: "{{ states(boolean_var) == 'on' }}"
+        sequence:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: !input boolean_entity
+          - stop: "Override attivato - automazione disabilitata"
+
+      - alias: Riattivazione Automazione
+        conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: morning_reset
+              - condition: trigger
+                id: enable_automation
+        sequence:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: !input boolean_entity
+          # Accendi la luce se è notte
+          - if:
+              - condition: template
+                value_template: "{{ is_night | bool }}"
+            then:
+              - action: light.turn_on
+                target:
+                  entity_id: !input light_entities
+                data:
+                  brightness: "{{ brightness_sun | int }}"
+                  color_temp_kelvin: "{{ color_temp }}"
+          - stop: "Riattivazione completata"
+
+  # === CONTROLLO SE AUTOMAZIONE È ATTIVA ===
+  - condition: template
+    value_template: "{{ states(boolean_var) == 'on' }}"
+
+  # === UNICO PUNTO DI AZIONE SULLE LUCI ===
+  - choose:
+      - alias: Spegni luci
+        conditions:
+          - condition: template
+            value_template: "{{ should_turn_off }}"
+        sequence:
+          - action: light.turn_off
+            target:
+              entity_id: !input light_entities
+    default:
+      - action: light.turn_on
+        target:
+          entity_id: !input light_entities
+        data:
+          brightness: "{{ target_brightness | int }}"
+          color_temp_kelvin: "{{ color_temp }}"
+
+mode: single
+max_exceeded: silent

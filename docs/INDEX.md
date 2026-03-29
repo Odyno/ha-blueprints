@@ -30,7 +30,7 @@ Complete guide to all documentation in this repository.
 ### "I want to create blueprints"
 1. [docs/BLUEPRINT_GUIDE.md](./docs/BLUEPRINT_GUIDE.md)
 2. [CONTRIBUTING.md](./CONTRIBUTING.md)
-3. [blueprints/automation/motion_light.yaml](./blueprints/automation/motion_light.yaml) - Example
+3. [blueprints/automation/smart_light_blueprint.yaml](./blueprints/automation/smart_light_blueprint.yaml) - Advanced example
 
 ### "Something doesn't work"
 1. [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
@@ -40,7 +40,7 @@ Complete guide to all documentation in this repository.
 ### "I want to contribute"
 1. [CONTRIBUTING.md](./CONTRIBUTING.md)
 2. [docs/BLUEPRINT_GUIDE.md](./docs/BLUEPRINT_GUIDE.md)
-3. Review existing blueprints for examples
+3. Review existing blueprints for examples (simple + advanced)
 
 ---
 
@@ -145,8 +145,8 @@ Complete guide to all documentation in this repository.
 ## 📞 Support & Contact
 
 ### Documentation Issues
-- [GitHub Issues](https://github.com/yourname/ha-blueprints/issues)
-- [GitHub Discussions](https://github.com/yourname/ha-blueprints/discussions)
+- [GitHub Issues](https://github.com/Odyno/ha-blueprints/issues)
+- [GitHub Discussions](https://github.com/Odyno/ha-blueprints/discussions)
 
 ### Home Assistant Support
 - [Community Forum](https://community.home-assistant.io/)
@@ -154,7 +154,7 @@ Complete guide to all documentation in this repository.
 
 ### General Questions
 1. Check [docs/FAQ.md](./docs/FAQ.md)
-2. Search [GitHub Discussions](https://github.com/yourname/ha-blueprints/discussions)
+2. Search [GitHub Discussions](https://github.com/Odyno/ha-blueprints/discussions)
 3. Ask in [Community Forum](https://community.home-assistant.io/)
 
 ---
@@ -168,6 +168,8 @@ Complete guide to all documentation in this repository.
 | Motion-Activated Light | `blueprints/automation/motion_light.yaml` | 1.0.0 | Auto light control |
 | Door Sensor Alert | `blueprints/automation/door_alert.yaml` | 1.1.0 | Security alerts |
 | Temperature Threshold | `blueprints/automation/temperature_threshold.yaml` | 1.0.0 | Temperature triggers |
+| Location Watchdog - GPS fermo | `blueprints/automation/location_watchdog.yaml` | 1.0.0 | Stale GPS watchdog |
+| Smart Light - Sun & Motion | `blueprints/automation/smart_light_blueprint.yaml` | 1.1.0 | Adaptive lighting |
 
 ### Script Blueprints
 
@@ -192,7 +194,7 @@ Complete guide to all documentation in this repository.
 ### Issues & Errors
 - Quick help: [docs/FAQ.md](./docs/FAQ.md)
 - Detailed solutions: [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
-- Report bugs: [GitHub Issues](https://github.com/yourname/ha-blueprints/issues)
+- Report bugs: [GitHub Issues](https://github.com/Odyno/ha-blueprints/issues)
 
 ---
 
@@ -233,7 +235,9 @@ ha-blueprints/
 │   ├── automation/
 │   │   ├── motion_light.yaml
 │   │   ├── door_alert.yaml
-│   │   └── temperature_threshold.yaml
+│   │   ├── temperature_threshold.yaml
+│   │   ├── location_watchdog.yaml
+│   │   └── smart_light_blueprint.yaml
 │   └── script/
 │       └── gentle_wakeup.yaml
 │
@@ -250,5 +254,5 @@ ha-blueprints/
 
 📖 **Can't find what you're looking for?**
 - Try the [FAQ](./docs/FAQ.md)
-- Open an [Issue](https://github.com/yourname/ha-blueprints/issues)
-- Ask in [Discussions](https://github.com/yourname/ha-blueprints/discussions)
+- Open an [Issue](https://github.com/Odyno/ha-blueprints/issues)
+- Ask in [Discussions](https://github.com/Odyno/ha-blueprints/discussions)

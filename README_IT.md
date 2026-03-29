@@ -55,6 +55,20 @@ Benvenuto nel repository dei blueprint Home Assistant! Questa è una collezione 
 - Azioni separate per ogni soglia
 - Perfetto per: protezione dal gelo, controllo HVAC, monitoraggio
 
+#### 4. Location Watchdog - GPS fermo (v1.0.0)
+**Rileva posizione GPS bloccata e gestisce tracker stale**
+- Monitora immobilita prolungata con soglia distanza anti-drift
+- Snapshot coordinate con storico temporale
+- Notifica una sola volta per evento
+- Perfetto per: presenza affidabile, fallback geolocalizzazione
+
+#### 5. Smart Light - Sun & Motion (v1.1.0)
+**Luci adattive in base a sole e movimento**
+- Transizione graduale in base all'elevazione del sole
+- Boost luminosita al 100% con movimento
+- Override manuale con riattivazione automatica
+- Perfetto per: studio, soggiorno, aree di passaggio
+
 ### Script
 
 #### Gentle Wake-Up (v1.0.0)
@@ -68,7 +82,7 @@ Benvenuto nel repository dei blueprint Home Assistant! Questa è una collezione 
 ## ⚙️ Requisiti
 
 ### Home Assistant
-- Versione **2023.6.0** o successiva (consigliato: ultima disponibile)
+- Versione **2023.6.0** o successiva (alcuni blueprint richiedono **2024.6.0**)
 - Accesso amministratore per importare blueprint
 
 ### Integrazioni necessarie
@@ -98,7 +112,7 @@ Dipendono dai blueprint che usi:
 
 ### Metodo 3: Clone Repository (Per Sviluppatori)
 ```bash
-git clone https://github.com/yourname/ha-blueprints.git
+git clone https://github.com/Odyno/ha-blueprints.git
 cd ha-blueprints
 # Copia i file .yaml nella cartella blueprints di Home Assistant
 ```
@@ -210,3 +224,4 @@ Tutti i blueprint sono **gratuiti** e puoi usarli, modificarli e ridistribuirli 
 **Domande?** Apri una [GitHub Issue](https://github.com/Odyno/ha-blueprints/issues) o scrivi nel [Forum Community](https://community.home-assistant.io/c/blueprints-exchange/53)!
 
 **Ultimo aggiornamento**: 2026-03-29
+**Blueprint totali**: 6

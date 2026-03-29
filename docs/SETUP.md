@@ -17,6 +17,8 @@ This guide helps you set up and use the Home Assistant Blueprints Collection.
 https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/motion_light.yaml
 https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/door_alert.yaml
 https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/temperature_threshold.yaml
+https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/location_watchdog.yaml
+https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/smart_light_blueprint.yaml
 https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/script/gentle_wakeup.yaml
 ```
 
@@ -26,7 +28,7 @@ https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/script/gen
 
 ```bash
 # Clone repository
-git clone https://github.com/yourname/ha-blueprints.git
+git clone https://github.com/Odyno/ha-blueprints.git
 cd ha-blueprints
 
 # Copy blueprints to Home Assistant
@@ -63,6 +65,8 @@ Each blueprint requires:
 | Motion-Activated Light | Binary sensor (motion), Light | Any motion sensor, any light |
 | Door Sensor Alert | Binary sensor (door), Notify service | Any door sensor, mobile_app or webhook |
 | Temperature Threshold | Temperature sensor | Any temperature sensor |
+| Location Watchdog - GPS fermo | Device tracker, input_text, input_boolean | Mobile App/iCloud + Helpers |
+| Smart Light - Sun & Motion | Light(s), motion sensor(s), input_boolean | Any lights + motion sensors |
 | Gentle Wake-Up Script | Light | Any light with brightness |
 
 ---
@@ -128,6 +132,35 @@ You'll get notifications when door opens while away.
 4. **Save**
 
 Then use in automations or morning routines.
+
+### Example 4: Smart Light - Sun & Motion
+
+1. **Open** Blueprints → Create automation
+2. **Select** "Smart Light - Sun & Motion"
+3. **Configure**:
+   - Lights: `light.studio_main`
+   - Motion sensors: `binary_sensor.studio_pir`
+   - Input boolean: `input_boolean.smart_light_studio`
+   - Normal brightness: `178`
+   - Motion brightness: `255`
+4. **Save** and enable
+
+Now lights adapt to sun elevation, boost with motion, and can be manually overridden.
+
+### Example 5: Location Watchdog - GPS fermo
+
+1. **Open** Blueprints → Create automation
+2. **Select** "Location Watchdog - GPS fermo"
+3. **Configure**:
+   - Person name: `Elena`
+   - Source device tracker: `device_tracker.elena_iphone`
+   - Distance threshold: `50` m
+   - Stale hours: `6`
+   - Snapshot helper: `input_text.elena_location_snapshot`
+   - Notified helper: `input_boolean.elena_location_notified`
+4. **Save** and enable
+
+Now the watchdog detects stale location periods and sends one alert per event.
 
 ---
 
@@ -199,7 +232,7 @@ To keep blueprints updated:
 ```bash
 # Using git
 cd ~/.homeassistant/blueprints
-git clone https://github.com/yourname/ha-blueprints.git
+git clone https://github.com/Odyno/ha-blueprints.git
 cd ha-blueprints
 git pull  # Update to latest
 
@@ -219,7 +252,9 @@ After importing, you'll have:
 │   ├── automation/
 │   │   ├── motion_light.yaml
 │   │   ├── door_alert.yaml
-│   │   └── temperature_threshold.yaml
+│   │   ├── temperature_threshold.yaml
+│   │   ├── location_watchdog.yaml
+│   │   └── smart_light_blueprint.yaml
 │   └── script/
 │       └── gentle_wakeup.yaml
 ├── automations.yaml
@@ -253,7 +288,7 @@ After importing, you'll have:
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| Home Assistant | 2023.6.0 | Latest |
+| Home Assistant | 2023.6.0 (2024.6.0 for some blueprints) | Latest |
 | RAM | 512 MB | 2 GB+ |
 | Storage | 50 MB | 500 MB+ |
 | Network | Stable | Reliable, 10+ Mbps |

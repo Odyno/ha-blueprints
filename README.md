@@ -27,6 +27,8 @@ A curated collection of reliable and well-documented Home Assistant blueprints d
 | **Motion-Activated Light** | Turn on light when motion is detected, with timeout | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/motion_light.yaml) |
 | **Door Sensor Alert** | Get notifications when doors are opened unexpectedly | ![v1.1.0](https://img.shields.io/badge/version-1.1.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/door_alert.yaml) |
 | **Temperature Threshold** | Trigger actions based on temperature limits | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/temperature_threshold.yaml) |
+| **Location Watchdog - GPS fermo** | Detect stale GPS position and handle stuck tracker scenarios | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/location_watchdog.yaml) |
+| **Smart Light - Sun & Motion** | Adaptive lighting based on sun elevation, motion, and manual override | ![v1.1.0](https://img.shields.io/badge/version-1.1.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/smart_light_blueprint.yaml) |
 
 ### Scripts
 
@@ -55,7 +57,7 @@ Click the **Import** button next to any blueprint above. Home Assistant will ope
 For development or bulk import:
 
 ```bash
-git clone https://github.com/yourname/ha-blueprints.git
+git clone https://github.com/Odyno/ha-blueprints.git
 cd ha-blueprints
 # Copy blueprints/automation/*.yaml to ~/.homeassistant/blueprints/automation/
 # Copy blueprints/script/*.yaml to ~/.homeassistant/blueprints/script/
@@ -169,5 +171,5 @@ Questions or suggestions? Open an issue or reach out on the community forum!
 ---
 
 **Last Updated**: 2026-03-29  
-**Total Blueprints**: 4  
+**Total Blueprints**: 6  
 **Validation Status**: ✅ All blueprints validated

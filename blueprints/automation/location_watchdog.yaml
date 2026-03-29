@@ -1,0 +1,326 @@
+blueprint:
+  name: "Location Watchdog - GPS fermo"
+  description: >
+    **v1.0.0**
+
+    Monitora se una persona è rimasta ferma (GPS) per oltre N ore.
+    "Fermo" = spostamento inferiore alla soglia metrica configurabile
+    rispetto all'ultimo snapshot, per evitare falsi positivi da GPS drift.
+
+    **Prerequisiti:**
+    - Il `device_tracker` sorgente della persona
+      (es. `device_tracker.elena_iphone`) — deve avere gli
+      attributi `latitude` e `longitude` (Companion App, iCloud…).
+    - Un `input_text` (max 60 char) e un `input_boolean` dedicati
+      per questa persona — da creare in Impostazioni → Helper.
+
+    **Comportamento:**
+    - Valuta periodicamente se la persona si è spostata oltre la soglia.
+    - Se si è spostata → aggiorna snapshot, reset flag notifica.
+    - Se è ferma da oltre il tempo configurato → notifica (opzionale,
+      una sola volta per evento) e forza il device tracker su not_home.
+
+    **Nota:** `device_tracker.see` funziona solo con tracker legacy
+    (YAML). Per tracker moderni (Companion App, iCloud…) il force
+    not_home potrebbe non avere effetto.
+
+    **Changelog:**
+    - v1.0.0 — release iniziale
+
+  domain: automation
+  author: "Alessandro Staniscia ( Odyno )"
+  source_url: "https://github.com/Odyno/ha-blueprints/blob/main/blueprints/automation/location_watchdog.yaml"
+  homeassistant:
+    min_version: "2024.6.0"
+
+  input:
+    # ----------------------------------------------------------
+    # PERSONA
+    # ----------------------------------------------------------
+    person_name:
+      name: "Nome persona"
+      description: "Nome visualizzato nelle notifiche (es. Elena)."
+      selector:
+        text:
+      default: "Persona"
+
+    source_device_tracker:
+      name: "Device tracker sorgente"
+      description: >
+        Device tracker da forzare su not_home quando il GPS è stale.
+        Trovalo in Developer Tools → States cercando "device_tracker.".
+      selector:
+        entity:
+          domain: device_tracker
+
+    # ----------------------------------------------------------
+    # SOGLIE
+    # ----------------------------------------------------------
+    distance_threshold_m:
+      name: "Soglia di movimento (metri)"
+      description: >
+        Spostamento minimo per considerare la persona in movimento.
+        Sotto questa soglia il movimento viene ignorato (GPS drift).
+        Consigliato: 30–50m in città, 100–200m in zona rurale.
+      default: 50
+      selector:
+        number:
+          min: 10
+          max: 500
+          step: 10
+          unit_of_measurement: "m"
+          mode: slider
+
+    stale_hours:
+      name: "Ore di immobilità prima dell'allerta"
+      description: >
+        Quante ore consecutive di immobilità devono trascorrere
+        prima che il watchdog intervenga.
+      default: 6
+      selector:
+        number:
+          min: 1
+          max: 48
+          step: 0.5
+          unit_of_measurement: "h"
+          mode: slider
+
+    # ----------------------------------------------------------
+    # FREQUENZA DI CONTROLLO
+    # HA non supporta !input nel campo minutes di time_pattern.
+    # Usiamo time_pattern /1 + condizione modulo per simulare
+    # qualsiasi intervallo senza drift cumulativo.
+    # ----------------------------------------------------------
+    check_interval_minutes:
+      name: "Intervallo di controllo"
+      description: >
+        Con quale frequenza eseguire il controllo.
+        Deve essere un divisore di 60 per allinearsi all'ora.
+      default: "15"
+      selector:
+        select:
+          options:
+            - label: "Ogni 5 minuti"
+              value: "5"
+            - label: "Ogni 10 minuti"
+              value: "10"
+            - label: "Ogni 15 minuti (consigliato)"
+              value: "15"
+            - label: "Ogni 20 minuti"
+              value: "20"
+            - label: "Ogni 30 minuti"
+              value: "30"
+            - label: "Ogni ora"
+              value: "60"
+
+    # ----------------------------------------------------------
+    # NOTIFICHE
+    # ----------------------------------------------------------
+    enable_notification:
+      name: "Abilita notifica"
+      description: >
+        Se attivo, invia una notifica quando il GPS risulta stale.
+        La notifica viene inviata una sola volta per ogni evento:
+        non si ripete ogni ciclo.
+      default: true
+      selector:
+        boolean:
+
+    notify_service:
+      name: "Servizio di notifica"
+      description: >
+        Servizio notify da usare (es. notify.mobile_app_iphone_elena,
+        notify.channel_info). Ignorato se le notifiche sono disabilitate.
+      default: "notify.notify"
+      selector:
+        text:
+
+    # ----------------------------------------------------------
+    # HELPER — da creare manualmente prima di usare il blueprint
+    # Impostazioni → Dispositivi e servizi → Helper → Crea helper
+    # ----------------------------------------------------------
+    snapshot_entity:
+      name: "input_text — snapshot GPS"
+      description: >
+        Helper input_text (max 60 caratteri) dove il blueprint salva
+        le coordinate snapshot nel formato lat|lon|timestamp.
+        Crea un helper dedicato per ogni persona.
+      selector:
+        entity:
+          domain: input_text
+
+    notified_entity:
+      name: "input_boolean — flag notifica inviata"
+      description: >
+        Helper input_boolean che evita notifiche ripetute.
+        Crea un helper dedicato per ogni persona.
+      selector:
+        entity:
+          domain: input_boolean
+
+# ------------------------------------------------------------
+# VARIABILI
+# ------------------------------------------------------------
+variables:
+  v_person_name: !input person_name
+  v_device_tracker: !input source_device_tracker
+  v_distance_m: !input distance_threshold_m
+  v_stale_hours: !input stale_hours
+  v_snapshot_entity: !input snapshot_entity
+  v_notified_entity: !input notified_entity
+  v_enable_notify: !input enable_notification
+  v_notify_service: !input notify_service
+  v_interval: !input check_interval_minutes
+
+# ------------------------------------------------------------
+# TRIGGER — ogni minuto; la condizione filtra l'intervallo
+# ------------------------------------------------------------
+triggers:
+  - trigger: time_pattern
+    minutes: "/1"
+
+# ------------------------------------------------------------
+# CONDIZIONI
+# Scatta solo al minuto che coincide con il multiplo
+# dell'intervallo configurato (finestra 59s per sicurezza).
+# ------------------------------------------------------------
+conditions:
+  - condition: template
+    value_template: >-
+      {{ now().minute % (v_interval | int(15)) == 0 }}
+
+# ------------------------------------------------------------
+# MODALITÀ
+# ------------------------------------------------------------
+mode: single
+
+# ------------------------------------------------------------
+# AZIONI
+# ------------------------------------------------------------
+actions:
+  # --------------------------------------------------------
+  # STEP 1 — estrai e valida le coordinate dal device tracker
+  # --------------------------------------------------------
+  - variables:
+      cur_lat: "{{ state_attr(v_device_tracker, 'latitude') | float(none) }}"
+      cur_lon: "{{ state_attr(v_device_tracker, 'longitude') | float(none) }}"
+      coords_valid: "{{ cur_lat is not none and cur_lon is not none }}"
+
+  - condition: template
+    value_template: "{{ coords_valid }}"
+
+  # --------------------------------------------------------
+  # STEP 2 — leggi e valida snapshot salvato
+  #           formato atteso:  lat|lon|unix_timestamp
+  # --------------------------------------------------------
+  - variables:
+      snapshot_raw: "{{ states(v_snapshot_entity) }}"
+      snapshot_valid: >-
+        {{
+          snapshot_raw not in ['unknown', 'unavailable', '']
+          and snapshot_raw.split('|') | length == 3
+          and snapshot_raw.split('|')[0] | float(none) is not none
+          and snapshot_raw.split('|')[1] | float(none) is not none
+          and snapshot_raw.split('|')[2] | float(none) is not none
+        }}
+      snap_lat: >-
+        {{ snapshot_raw.split('|')[0] | float(none) if snapshot_valid else none }}
+      snap_lon: >-
+        {{ snapshot_raw.split('|')[1] | float(none) if snapshot_valid else none }}
+      snap_ts: >-
+        {{ snapshot_raw.split('|')[2] | float(0) if snapshot_valid else 0 }}
+
+  # --------------------------------------------------------
+  # STEP 3 — inizializza snapshot se assente o corrotto
+  # --------------------------------------------------------
+  - if:
+      - condition: template
+        value_template: >-
+          {{ not snapshot_valid or snap_lat is none or snap_lon is none }}
+    then:
+      - action: input_text.set_value
+        data:
+          entity_id: "{{ v_snapshot_entity }}"
+          value: "{{ cur_lat }}|{{ cur_lon }}|{{ as_timestamp(now()) }}"
+      - stop: >-
+          Snapshot inizializzato per {{ v_person_name }}.
+          Il watchdog sarà attivo dal prossimo ciclo.
+
+  # --------------------------------------------------------
+  # STEP 4 — calcola distanza Haversine (metri) e ore trascorse
+  # --------------------------------------------------------
+  - variables:
+      distance_m: >-
+        {% set R = 6371000 %}
+        {% set lat1 = snap_lat | float * (pi / 180) %}
+        {% set lat2 = cur_lat  | float * (pi / 180) %}
+        {% set dlat = (cur_lat  - snap_lat) | float * (pi / 180) %}
+        {% set dlon = (cur_lon  - snap_lon) | float * (pi / 180) %}
+        {% set a = (dlat / 2) | sin ** 2
+                   + lat1 | cos * lat2 | cos * (dlon / 2) | sin ** 2 %}
+        {% set c = 2 * (a ** 0.5) | asin %}
+        {{ (R * c) | round(1) }}
+
+      elapsed_h: >-
+        {{ ((as_timestamp(now()) - snap_ts) / 3600) | round(2) }}
+
+      has_moved: "{{ distance_m | float >= (v_distance_m | float) }}"
+
+      is_stale: >-
+        {{
+          distance_m | float < (v_distance_m | float)
+          and elapsed_h | float > (v_stale_hours | float)
+        }}
+
+  # --------------------------------------------------------
+  # STEP 5 — persona si è spostata: aggiorna snapshot + reset flag
+  # --------------------------------------------------------
+  - if:
+      - condition: template
+        value_template: "{{ has_moved }}"
+    then:
+      - action: input_text.set_value
+        data:
+          entity_id: "{{ v_snapshot_entity }}"
+          value: "{{ cur_lat }}|{{ cur_lon }}|{{ as_timestamp(now()) }}"
+
+      - action: input_boolean.turn_off
+        target:
+          entity_id: "{{ v_notified_entity }}"
+
+    # --------------------------------------------------------
+    # STEP 6 — persona ferma: gestisci evento stale
+    # --------------------------------------------------------
+    else:
+      - if:
+          - condition: template
+            value_template: >-
+              {{
+                is_stale
+                and states(v_notified_entity) == 'off'
+              }}
+        then:
+          # 7a — Notifica (solo se abilitata)
+          - if:
+              - condition: template
+                value_template: "{{ v_enable_notify | bool(true) }}"
+            then:
+              - action: "{{ v_notify_service }}"
+                data:
+                  message: >-
+                    ⚠️ Posizione {{ v_person_name }} ferma da
+                    {{ elapsed_h | round(1) }} ore
+                    (spostamento rilevato: {{ distance_m }}m,
+                    soglia configurata: {{ v_distance_m }}m).
+                    Forzo device tracker su not_home.
+
+          # 7b — Segna come notificato per evitare spam
+          - action: input_boolean.turn_on
+            target:
+              entity_id: "{{ v_notified_entity }}"
+
+          # 7c — Forza device tracker sorgente su not_home
+          - action: device_tracker.see
+            data:
+              dev_id: "{{ v_device_tracker | replace('device_tracker.', '') }}"
+              location_name: not_home
