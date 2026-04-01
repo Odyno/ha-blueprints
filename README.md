@@ -13,7 +13,7 @@ A curated collection of reliable and well-documented Home Assistant blueprints d
 - ✅ **Versioned Blueprints** - Each blueprint tracks its version in metadata
 - ✅ **Automated Validation** - All blueprints are YAML-validated on every update
 - ✅ **Comprehensive Documentation** - Detailed descriptions and usage examples
-- ✅ **Diverse Categories** - Automation, script, and template blueprints
+- ✅ **Diverse Categories** - Automation and script blueprints
 - ✅ **Community Support** - Contributing guidelines for all users
 
 ---
@@ -24,17 +24,17 @@ A curated collection of reliable and well-documented Home Assistant blueprints d
 
 | Blueprint | Description | Version | Import |
 |-----------|-------------|---------|--------|
-| **Motion-Activated Light** | Turn on light when motion is detected, with timeout | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/motion_light.yaml) |
-| **Door Sensor Alert** | Get notifications when doors are opened unexpectedly | ![v1.1.0](https://img.shields.io/badge/version-1.1.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/door_alert.yaml) |
-| **Temperature Threshold** | Trigger actions based on temperature limits | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/temperature_threshold.yaml) |
-| **Location Watchdog - GPS fermo** | Detect stale GPS position and handle stuck tracker scenarios | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/location_watchdog.yaml) |
-| **Smart Light - Sun & Motion** | Adaptive lighting based on sun elevation, motion, and manual override | ![v1.1.0](https://img.shields.io/badge/version-1.1.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/automation/smart_light_blueprint.yaml) |
+| **Motion-Activated Light** | Turn on light when motion is detected, with timeout | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https%3A%2F%2Fraw.githubusercontent.com%2FOdyno%2Fha-blueprints%2Fmain%2Fblueprints%2Fautomation%2Fmotion_light.yaml) |
+| **Door Sensor Alert** | Get notifications when doors are opened unexpectedly | ![v1.1.0](https://img.shields.io/badge/version-1.1.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https%3A%2F%2Fraw.githubusercontent.com%2FOdyno%2Fha-blueprints%2Fmain%2Fblueprints%2Fautomation%2Fdoor_alert.yaml) |
+| **Temperature Threshold** | Trigger actions based on temperature limits | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https%3A%2F%2Fraw.githubusercontent.com%2FOdyno%2Fha-blueprints%2Fmain%2Fblueprints%2Fautomation%2Ftemperature_threshold.yaml) |
+| **Location Watchdog - GPS fermo** | Detect stale GPS position and handle stuck tracker scenarios | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https%3A%2F%2Fraw.githubusercontent.com%2FOdyno%2Fha-blueprints%2Fmain%2Fblueprints%2Fautomation%2Flocation_watchdog.yaml) |
+| **Smart Light - Sun & Motion** | Adaptive lighting based on sun elevation, motion, and manual override | ![v1.1.0](https://img.shields.io/badge/version-1.1.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https%3A%2F%2Fraw.githubusercontent.com%2FOdyno%2Fha-blueprints%2Fmain%2Fblueprints%2Fautomation%2Fsmart_light_blueprint.yaml) |
 
 ### Scripts
 
 | Blueprint | Description | Version | Import |
 |-----------|-------------|---------|--------|
-| **Gentle Wake-Up** | Gradually brighten lights over specified duration | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Odyno/ha-blueprints/main/blueprints/script/gentle_wakeup.yaml) |
+| **Gentle Wake-Up** | Gradually brighten lights over specified duration | ![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue) | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https%3A%2F%2Fraw.githubusercontent.com%2FOdyno%2Fha-blueprints%2Fmain%2Fblueprints%2Fscript%2Fgentle_wakeup.yaml) |
 
 ---
 
@@ -122,7 +122,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 1. **Fork the repository**
 2. **Create a new branch** (`feature/your-blueprint-name`)
-3. **Add your blueprint** following the structure in `docs/BLUEPRINT_TEMPLATE.md`
+3. **Add your blueprint** following the structure in `docs/BLUEPRINT_GUIDE.md`
 4. **Test locally** with Home Assistant
 5. **Submit a Pull Request** with clear description
 
@@ -170,6 +170,6 @@ Questions or suggestions? Open an issue or reach out on the community forum!
 
 ---
 
-**Last Updated**: 2026-03-29  
+**Last Updated**: 2026-04-01  
 **Total Blueprints**: 6  
 **Validation Status**: ✅ All blueprints validated

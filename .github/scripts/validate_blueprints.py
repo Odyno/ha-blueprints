@@ -11,6 +11,24 @@ from pathlib import Path
 from typing import Dict, Any, List
 import re
 
+
+class HomeAssistantLoader(yaml.SafeLoader):
+    """YAML loader that tolerates Home Assistant custom tags like !input."""
+
+
+def _ha_tag_constructor(loader, tag_suffix, node):
+    """Preserve tagged values while allowing validation to continue."""
+    if isinstance(node, yaml.ScalarNode):
+        return loader.construct_scalar(node)
+    if isinstance(node, yaml.SequenceNode):
+        return loader.construct_sequence(node)
+    if isinstance(node, yaml.MappingNode):
+        return loader.construct_mapping(node)
+    return None
+
+
+HomeAssistantLoader.add_multi_constructor("!", _ha_tag_constructor)
+
 REQUIRED_FIELDS = {
     "blueprint": ["name", "domain", "description"],
     "metadata": ["version", "source_url"],
@@ -38,8 +56,8 @@ def validate_blueprint(filepath: Path) -> Dict[str, Any]:
     }
     
     try:
-        with open(filepath, "r") as f:
-            content = yaml.safe_load(f)
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = yaml.load(f, Loader=HomeAssistantLoader)
         
         if not isinstance(content, dict) or "blueprint" not in content:
             results["errors"].append("Missing 'blueprint:' root section")

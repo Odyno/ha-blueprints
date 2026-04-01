@@ -8,7 +8,7 @@ Benvenuto nel repository dei blueprint Home Assistant! Questa è una collezione 
 
 1. Vai a **Impostazioni → Automazioni e Scene → Blueprint**
 2. Clicca il pulsante blu **Importa Blueprint**
-3. Clicca il badge di importazione accanto al blueprint che vuoi usare nella pagina principale [README.md](./README.md)
+3. Clicca il badge di importazione accanto al blueprint che vuoi usare nella tabella del file [README.md](./README.md)
 4. Home Assistant farà il resto automaticamente
 5. Fatto! ✅
 
@@ -223,5 +223,5 @@ Tutti i blueprint sono **gratuiti** e puoi usarli, modificarli e ridistribuirli 
 
 **Domande?** Apri una [GitHub Issue](https://github.com/Odyno/ha-blueprints/issues) o scrivi nel [Forum Community](https://community.home-assistant.io/c/blueprints-exchange/53)!
 
-**Ultimo aggiornamento**: 2026-03-29
+**Ultimo aggiornamento**: 2026-04-01
 **Blueprint totali**: 6

@@ -11,9 +11,12 @@ blueprint:
     - Supports multiple lights and motion sensors
   domain: automation
   author: "Alessandro Staniscia ( Odyno )"
-  source_url: "https://github.com/Odyno/ha-blueprints/blob/main/blueprints/automation/smart_light_blueprint.yaml"
   homeassistant:
     min_version: "2024.6.0"
+
+  metadata:
+    version: "1.1.0"
+    source_url: "https://github.com/Odyno/ha-blueprints/blob/main/blueprints/automation/smart_light_blueprint.yaml"
 
   input:
     # === ENTITIES ===
