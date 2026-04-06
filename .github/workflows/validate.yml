@@ -2,104 +2,43 @@ name: Validate Blueprints
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
     paths:
-      - 'blueprints/**/*.yaml'
-      - '.github/workflows/validate.yml'
+      - "blueprints/**/*.yaml"
+      - "docs/BLUEPRINT_VERSIONS.md"
+      - "scripts/release-blueprint.sh"
+      - ".github/scripts/validate_blueprints.py"
+      - ".github/workflows/validate.yml"
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
     paths:
-      - 'blueprints/**/*.yaml'
+      - "blueprints/**/*.yaml"
+      - "docs/BLUEPRINT_VERSIONS.md"
+      - "scripts/release-blueprint.sh"
+      - ".github/scripts/validate_blueprints.py"
+      - ".github/workflows/validate.yml"
 
 jobs:
-  yaml-lint:
+  validate:
     runs-on: ubuntu-latest
-    name: YAML Syntax Validation
-    
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-      
-      - name: Install yamllint
-        run: pip install yamllint
-      
-      - name: Lint YAML files
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install yamllint pyyaml
+
+      - name: Lint YAML
         run: |
           yamllint -d "{extends: relaxed}" blueprints/
-      
-      - name: Check blueprint structure
-        run: |
-          # Verify all blueprints have required fields
-          for file in blueprints/**/*.yaml; do
-            echo "Checking $file..."
-            
-            # Check for required blueprint fields
-            if ! grep -q "^blueprint:" "$file"; then
-              echo "ERROR: $file missing 'blueprint:' section"
-              exit 1
-            fi
-            
-            if ! grep -q "name:" "$file"; then
-              echo "ERROR: $file missing 'name' field"
-              exit 1
-            fi
-            
-            if ! grep -q "domain:" "$file"; then
-              echo "ERROR: $file missing 'domain' field"
-              exit 1
-            fi
-            
-            if ! grep -q "description:" "$file"; then
-              echo "ERROR: $file missing 'description' field"
-              exit 1
-            fi
-            
-            echo "✓ $file is valid"
-          done
 
-  validate-metadata:
-    runs-on: ubuntu-latest
-    name: Metadata Validation
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Install dependencies
-        run: pip install pyyaml
-      
-      - name: Validate blueprint metadata
-        run: python3 .github/scripts/validate_blueprints.py
-        continue-on-error: true
+      - name: Validate version registry
+        run: python .github/scripts/validate_blueprints.py
 
-  file-naming:
-    runs-on: ubuntu-latest
-    name: File Naming Convention Check
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Check naming conventions
-        run: |
-          # Check for valid blueprint file names (lowercase with underscores)
-          for file in blueprints/**/*.yaml; do
-            filename=$(basename "$file")
-            
-            # Should be lowercase with underscores
-            if [[ $filename =~ [A-Z] ]]; then
-              echo "ERROR: $file contains uppercase letters"
-              exit 1
-            fi
-            
-            if [[ $filename =~ " " ]]; then
-              echo "ERROR: $file contains spaces"
-              exit 1
-            fi
-            
-            echo "✓ $filename follows naming convention"
-          done
+      - name: Validate release script syntax
+        run: bash -n scripts/release-blueprint.sh

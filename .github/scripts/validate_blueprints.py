@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Blueprint metadata validation script.
-Ensures all blueprints have correct metadata structure.
+Blueprint validation script.
+Ensures Home Assistant compatible schema and per-blueprint version registry consistency.
 """
 
 import yaml
@@ -31,7 +31,6 @@ HomeAssistantLoader.add_multi_constructor("!", _ha_tag_constructor)
 
 REQUIRED_FIELDS = {
     "blueprint": ["name", "domain", "description"],
-    "metadata": ["version", "source_url"],
 }
 
 OPTIONAL_FIELDS = {
@@ -41,12 +40,71 @@ OPTIONAL_FIELDS = {
 VALID_DOMAINS = ["automation", "script", "template"]
 
 VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
+DESCRIPTION_VERSION_PATTERN = re.compile(r"\bv(\d+\.\d+\.\d+)\b")
+
+
+def parse_registry(registry_path: Path) -> Dict[str, Dict[str, str]]:
+    """Parse docs/BLUEPRINT_VERSIONS.md and return path-indexed rows."""
+    rows: Dict[str, Dict[str, str]] = {}
+
+    if not registry_path.exists():
+        raise FileNotFoundError(f"Registry file not found: {registry_path}")
+
+    text = registry_path.read_text(encoding="utf-8")
+    table_lines: List[str] = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip().startswith("|")
+    ]
+
+    if len(table_lines) < 2:
+        raise ValueError("Registry table not found or malformed")
+
+    # Remove markdown separator rows like |---|---|
+    data_lines = [
+        line for line in table_lines
+        if not re.fullmatch(r"\|\s*[-:| ]+\|", line)
+    ]
+
+    if len(data_lines) < 2:
+        raise ValueError("Registry table has no data rows")
+
+    # Convert markdown table rows into CSV-like rows.
+    parsed_rows = []
+    for line in data_lines:
+        cols = [c.strip() for c in line.strip("|").split("|")]
+        parsed_rows.append(cols)
+
+    headers = parsed_rows[0]
+    for values in parsed_rows[1:]:
+        if len(values) != len(headers):
+            continue
+        row = dict(zip(headers, values))
+        path = row.get("Path", "")
+        if path:
+            rows[path] = row
+
+    if not rows:
+        raise ValueError("Registry parsed but no valid blueprint rows found")
+
+    return rows
+
+
+def extract_version_from_description(description: Any) -> str:
+    """Extract vX.Y.Z from blueprint description."""
+    if description is None:
+        return ""
+
+    match = DESCRIPTION_VERSION_PATTERN.search(str(description))
+    if not match:
+        return ""
+    return match.group(1)
 
 def validate_version(version: str) -> bool:
     """Check if version follows semantic versioning (X.Y.Z)."""
     return bool(VERSION_PATTERN.match(version))
 
-def validate_blueprint(filepath: Path) -> Dict[str, Any]:
+def validate_blueprint(filepath: Path, registry_rows: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
     """Validate a single blueprint file."""
     results = {
         "file": str(filepath),
@@ -81,34 +139,41 @@ def validate_blueprint(filepath: Path) -> Dict[str, Any]:
                 )
                 results["valid"] = False
         
-        # Check metadata
-        if "metadata" not in blueprint:
-            results["warnings"].append("Missing 'metadata' section")
+        # metadata key is not part of the preferred schema for broad compatibility.
+        if "metadata" in blueprint:
+            results["warnings"].append(
+                "Deprecated key: blueprint.metadata (prefer docs/BLUEPRINT_VERSIONS.md for versioning)"
+            )
+
+        if "source_url" in blueprint:
+            url = str(blueprint["source_url"])
+            if not url.startswith("https://github.com/"):
+                results["warnings"].append("blueprint.source_url should point to GitHub")
         else:
-            metadata = blueprint["metadata"]
-            
-            # Check required metadata fields
-            for field in REQUIRED_FIELDS["metadata"]:
-                if field not in metadata:
-                    results["errors"].append(f"Missing required field: blueprint.metadata.{field}")
-                    results["valid"] = False
-            
-            # Validate version format
-            if "version" in metadata:
-                if not validate_version(metadata["version"]):
-                    results["errors"].append(
-                        f"Invalid version format '{metadata['version']}'. "
-                        "Must follow semantic versioning (X.Y.Z)"
-                    )
-                    results["valid"] = False
-            
-            # Validate source_url format
-            if "source_url" in metadata:
-                url = metadata["source_url"]
-                if not url.startswith("https://github.com/"):
-                    results["warnings"].append(
-                        f"source_url should point to GitHub"
-                    )
+            results["warnings"].append("Missing optional field: blueprint.source_url")
+
+        path_key = filepath.as_posix()
+        row = registry_rows.get(path_key)
+        if not row:
+            results["errors"].append(
+                f"Missing registry entry in docs/BLUEPRINT_VERSIONS.md for path '{path_key}'"
+            )
+            results["valid"] = False
+        else:
+            registry_version = row.get("Current Version", "")
+            if not validate_version(registry_version):
+                results["errors"].append(
+                    f"Invalid registry version '{registry_version}' for '{path_key}'"
+                )
+                results["valid"] = False
+
+            desc_version = extract_version_from_description(blueprint.get("description"))
+            if not desc_version:
+                results["warnings"].append("Description does not contain a version token like vX.Y.Z")
+            elif registry_version and desc_version != registry_version:
+                results["warnings"].append(
+                    f"Version mismatch: description=v{desc_version}, registry={registry_version}"
+                )
         
         # Check homeassistant minimum version if present
         if "homeassistant" in blueprint:
@@ -138,6 +203,7 @@ def validate_blueprint(filepath: Path) -> Dict[str, Any]:
 def main():
     """Main validation function."""
     blueprints_dir = Path("blueprints")
+    registry_path = Path("docs/BLUEPRINT_VERSIONS.md")
     
     if not blueprints_dir.exists():
         print("ERROR: 'blueprints' directory not found")
@@ -149,6 +215,12 @@ def main():
         print("WARNING: No YAML files found in blueprints directory")
         return
     
+    try:
+        registry_rows = parse_registry(registry_path)
+    except Exception as exc:
+        print(f"ERROR: failed to parse version registry: {exc}")
+        sys.exit(1)
+
     all_valid = True
     total_errors = 0
     total_warnings = 0
@@ -156,7 +228,7 @@ def main():
     print(f"Validating {len(yaml_files)} blueprint file(s)...\n")
     
     for filepath in sorted(yaml_files):
-        result = validate_blueprint(filepath)
+        result = validate_blueprint(filepath, registry_rows)
         
         if result["errors"]:
             all_valid = False
