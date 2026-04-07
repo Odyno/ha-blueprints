@@ -16,9 +16,9 @@ blueprint:
 
     **Comportamento:**
     - Valuta periodicamente se la persona si è spostata oltre la soglia.
-    - Se si è spostata → aggiorna snapshot, reset flag notifica.
-    - Se è ferma da oltre il tempo configurato → notifica (opzionale,
-      una sola volta per evento) e forza il device tracker su not_home.
+    - Se si è spostata → aggiorna snapshot, reset flag intervento.
+    - Se è ferma da oltre il tempo configurato → forza il device tracker
+      su not_home.
 
     **Nota:** `device_tracker.see` funziona solo con tracker legacy
     (YAML). Per tracker moderni (Companion App, iCloud…) il force
@@ -39,7 +39,7 @@ blueprint:
     # ----------------------------------------------------------
     person_name:
       name: "Nome persona"
-      description: "Nome visualizzato nelle notifiche (es. Elena)."
+      description: "Nome visualizzato nei messaggi interni (es. Elena)."
       selector:
         text:
       default: "Persona"
@@ -116,28 +116,6 @@ blueprint:
               value: "60"
 
     # ----------------------------------------------------------
-    # NOTIFICHE
-    # ----------------------------------------------------------
-    enable_notification:
-      name: "Abilita notifica"
-      description: >
-        Se attivo, invia una notifica quando il GPS risulta stale.
-        La notifica viene inviata una sola volta per ogni evento:
-        non si ripete ogni ciclo.
-      default: true
-      selector:
-        boolean:
-
-    notify_service:
-      name: "Servizio di notifica"
-      description: >
-        Servizio notify da usare (es. notify.mobile_app_iphone_elena,
-        notify.channel_info). Ignorato se le notifiche sono disabilitate.
-      default: "notify.notify"
-      selector:
-        text:
-
-    # ----------------------------------------------------------
     # HELPER — da creare manualmente prima di usare il blueprint
     # Impostazioni → Dispositivi e servizi → Helper → Crea helper
     # ----------------------------------------------------------
@@ -151,15 +129,6 @@ blueprint:
         entity:
           domain: input_text
 
-    notified_entity:
-      name: "input_boolean — flag notifica inviata"
-      description: >
-        Helper input_boolean che evita notifiche ripetute.
-        Crea un helper dedicato per ogni persona.
-      selector:
-        entity:
-          domain: input_boolean
-
 # ------------------------------------------------------------
 # VARIABILI
 # ------------------------------------------------------------
@@ -169,9 +138,6 @@ variables:
   v_distance_m: !input distance_threshold_m
   v_stale_hours: !input stale_hours
   v_snapshot_entity: !input snapshot_entity
-  v_notified_entity: !input notified_entity
-  v_enable_notify: !input enable_notification
-  v_notify_service: !input notify_service
   v_interval: !input check_interval_minutes
 
 # ------------------------------------------------------------
@@ -277,7 +243,7 @@ actions:
         }}
 
   # --------------------------------------------------------
-  # STEP 5 — persona si è spostata: aggiorna snapshot + reset flag
+  # STEP 5 — persona si è spostata: aggiorna snapshot
   # --------------------------------------------------------
   - if:
       - condition: template
@@ -288,42 +254,15 @@ actions:
           entity_id: "{{ v_snapshot_entity }}"
           value: "{{ cur_lat }}|{{ cur_lon }}|{{ as_timestamp(now()) }}"
 
-      - action: input_boolean.turn_off
-        target:
-          entity_id: "{{ v_notified_entity }}"
-
     # --------------------------------------------------------
     # STEP 6 — persona ferma: gestisci evento stale
     # --------------------------------------------------------
     else:
       - if:
           - condition: template
-            value_template: >-
-              {{
-                is_stale
-                and states(v_notified_entity) == 'off'
-              }}
+            value_template: "{{ is_stale }}"
         then:
-          # 7a — Notifica (solo se abilitata)
-          - if:
-              - condition: template
-                value_template: "{{ v_enable_notify | bool(true) }}"
-            then:
-              - action: "{{ v_notify_service }}"
-                data:
-                  message: >-
-                    ⚠️ Posizione {{ v_person_name }} ferma da
-                    {{ elapsed_h | round(1) }} ore
-                    (spostamento rilevato: {{ distance_m }}m,
-                    soglia configurata: {{ v_distance_m }}m).
-                    Forzo device tracker su not_home.
-
-          # 7b — Segna come notificato per evitare spam
-          - action: input_boolean.turn_on
-            target:
-              entity_id: "{{ v_notified_entity }}"
-
-          # 7c — Forza device tracker sorgente su not_home
+          # 7a — Forza device tracker sorgente su not_home
           - action: device_tracker.see
             data:
               dev_id: "{{ v_device_tracker | replace('device_tracker.', '') }}"
