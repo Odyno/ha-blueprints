@@ -254,12 +254,14 @@ actions:
   - variables:
       distance_m: >-
         {% set R = 6371000 %}
-        {% set lat1 = snap_lat | float * (pi / 180) %}
-        {% set lat2 = cur_lat  | float * (pi / 180) %}
-        {% set dlat = (cur_lat  - snap_lat) | float * (pi / 180) %}
-        {% set dlon = (cur_lon  - snap_lon) | float * (pi / 180) %}
-        {% set a = (dlat / 2) | sin ** 2
-                   + lat1 | cos * lat2 | cos * (dlon / 2) | sin ** 2 %}
+        {% set lat1 = (snap_lat | float) * (pi / 180) %}
+        {% set lat2 = (cur_lat | float) * (pi / 180) %}
+        {% set dlat = ((cur_lat | float) - (snap_lat | float)) * (pi / 180) %}
+        {% set dlon = ((cur_lon | float) - (snap_lon | float)) * (pi / 180) %}
+        {% set sin_dlat = ((dlat / 2) | sin) %}
+        {% set sin_dlon = ((dlon / 2) | sin) %}
+        {% set a = (sin_dlat ** 2)
+                   + ((lat1 | cos) * (lat2 | cos) * (sin_dlon ** 2)) %}
         {% set c = 2 * (a ** 0.5) | asin %}
         {{ (R * c) | round(1) }}
 
