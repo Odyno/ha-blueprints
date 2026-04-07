@@ -100,6 +100,8 @@ blueprint:
       selector:
         select:
           options:
+            - label: "Ogni minuto (Debug)"
+              value: "1"
             - label: "Ogni 5 minuti"
               value: "5"
             - label: "Ogni 10 minuti"
